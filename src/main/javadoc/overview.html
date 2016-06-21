@@ -1,0 +1,34 @@
+<HTML>
+	<body>
+		Driver for the integration GSM modems.
+		<p>
+		This driver provides services for sending and receiving SMSs and events generation for incoming calls via GSM modem.<br />
+		The employed protocol complies with the AT commands specified by the GSM standard set.
+		
+		@author Giampiero Baggiani
+		@sfera.config type
+			cc.sferalabs.sfera.drivers.cameras.http_proxy.HttpProxyCamera
+		@sfera.config address
+			name of the local serial port (e.g. "/dev/ttyS0") or address of the remote gateway
+			in the format <hostname>:<port> (e.g. "192.168.1.150:4040" or "port.example.com:5001")
+		@sfera.config baud_rate
+			optional; boud rate for serial communication with the modem. Defaults to 115200
+		@sfera.config data_bits
+			optional; number of data bits for serial communication with the modem. Defaults to 8
+		@sfera.config stop_bits
+			optional; number of stop bits for serial communication with the modem. Defaults to 1
+		@sfera.config parity
+			optional; parity for serial communication with the modem: 0 = none, 1 = odd, 2 = even, 3 = mark, 4 = space. Defaults to 0 (none)
+		@sfera.config flow_control
+			optional; flow control mode for serial communication with the modem: 0 = none, 3 = RTS/CTS, 12 = XON/XOFF. Defaults to 0 (none)
+		@sfera.config country_code
+			optional; the default country code (e.g. '39', for Italy) to be used when not otherwise specified. If omitted all provided numbers shall include the country code
+		@sfera.config pin
+			optional; 4-digits PIN code of the SIM card (if used)
+		@sfera.config service_center
+			optional; phone number of the SMS service center (use the international format, e.g. +393492000200). If not specified, the default number saved on the SIM card will be used. If not available, the driver will not be able to send SMS messages
+		@sfera.config sim_phase_2
+			optional; set to 'true' to enable SIM phase 2+ compatibility. Defaults to 'false'
+
+	</body>
+</HTML>

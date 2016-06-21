@@ -5,11 +5,17 @@ import cc.sferalabs.sfera.drivers.Driver;
 import cc.sferalabs.sfera.io.comm.CommPort;
 import cc.sferalabs.sfera.io.comm.CommPortException;
 
+/**
+ *
+ * @author Giampiero Baggiani
+ *
+ * @version 1.0.0
+ *
+ */
 public class Gsm extends Driver {
 
 	private CommPort commPort;
 	private int stateErrorCount;
-	private String countryCode;
 	private CommunicationHandler commHandler;
 	private boolean ready = false;
 
@@ -22,9 +28,9 @@ public class Gsm extends Driver {
 		ready = false;
 		stateErrorCount = 0;
 
-		String portName = config.get("serial_port", null);
+		String portName = config.get("address", null);
 		if (portName == null) {
-			log.error("Serial port not specified in configuration");
+			log.error("Address not specified in configuration");
 			return false;
 		}
 
@@ -34,11 +40,12 @@ public class Gsm extends Driver {
 			int dataBits = config.get("data_bits", 8);
 			int stopBits = config.get("stop_bits", 1);
 			int parity = config.get("parity", CommPort.PARITY_NONE);
-			commPort.setParams(baudRate, dataBits, stopBits, parity,
-					CommPort.FLOWCONTROL_RTSCTS);
+			int flowControl = config.get("flow_control", CommPort.FLOWCONTROL_RTSCTS);
+			commPort.setParams(baudRate, dataBits, stopBits, parity, flowControl);
 
-			countryCode = config.get("country_code", null);
-			commHandler = new CommunicationHandler(this, commPort, countryCode, log);
+			Integer countryCode = config.get("country_code", null);
+			boolean useSimPhase2 = config.get("sim_phase_2", false);
+			commHandler = new CommunicationHandler(this, commPort, countryCode, useSimPhase2, log);
 			commPort.setListener(commHandler);
 
 			while (commPort.getAvailableBytesCount() > 0) {
@@ -53,7 +60,7 @@ public class Gsm extends Driver {
 		}
 
 		try {
-			String pin = config.get("pin", null);
+			Integer pin = config.get("pin", null);
 			String serviceCenterAddr = config.get("service_center", null);
 			commHandler.initGsm(pin, serviceCenterAddr);
 		} catch (InterruptedException e) {
@@ -93,20 +100,26 @@ public class Gsm extends Driver {
 	}
 
 	/**
+	 * Sends the specified body text to the specified phone number.
 	 * 
 	 * @param to
+	 *            the recipient phone number
 	 * @param body
-	 * @return
+	 *            the body text to send
+	 * @return whether or not the operation was successful
 	 */
 	public boolean send(long to, String body) {
 		return send(Long.toString(to), body);
 	}
 
 	/**
+	 * Sends the specified body text to the specified phone number.
 	 * 
 	 * @param to
+	 *            the recipient phone number
 	 * @param body
-	 * @return
+	 *            the body text to send
+	 * @return whether or not the operation was successful
 	 */
 	public boolean send(String to, String body) {
 		if (!ready) {

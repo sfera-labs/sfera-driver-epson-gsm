@@ -29,6 +29,7 @@ class CommunicationHandler implements CommPortListener {
 	private final CommPort commPort;
 	private final Logger logger;
 	private final String countryCode;
+	private final boolean useSimPhase2;
 
 	private int commState;
 	private int restart;
@@ -41,12 +42,15 @@ class CommunicationHandler implements CommPortListener {
 	 * @param gsm
 	 * @param commPort
 	 * @param countryCode
+	 * @param useSimPhase2
 	 * @param logger
 	 */
-	CommunicationHandler(Gsm gsm, CommPort commPort, String countryCode, Logger logger) {
+	CommunicationHandler(Gsm gsm, CommPort commPort, Integer countryCode, boolean useSimPhase2,
+			Logger logger) {
 		this.gsm = gsm;
 		this.commPort = commPort;
-		this.countryCode = countryCode;
+		this.countryCode = (countryCode == null) ? null : "" + countryCode;
+		this.useSimPhase2 = useSimPhase2;
 		this.logger = logger;
 	}
 
@@ -140,6 +144,13 @@ class CommunicationHandler implements CommPortListener {
 
 		if (commState == 4) { // PDU
 			processPDU(data);
+			if (useSimPhase2) {
+				try {
+					write("AT+CNMA=0\r");
+					poll();
+				} catch (Exception e) {
+				}
+			}
 			commState = 0;
 
 		} else if (data.startsWith("+CMT:")) {
@@ -152,8 +163,8 @@ class CommunicationHandler implements CommPortListener {
 		} else if (data.equals("OK") || data.equals("> ") || data.contains("ERROR")
 				|| data.startsWith("+CPIN:") || data.startsWith("+CSCS:")
 				|| data.startsWith("+CMGS:") || data.startsWith("+CSQ:")
-				|| data.startsWith("+CSCA:") || data.startsWith("+COPS?:")
-				|| data.startsWith("+CREG?:")) {
+				|| data.startsWith("+CSCA:") || data.startsWith("+CSMS:")
+				|| data.startsWith("+COPS?:") || data.startsWith("+CREG?:")) {
 			if (messages != null) {
 				messages.add(data);
 			}
@@ -176,7 +187,7 @@ class CommunicationHandler implements CommPortListener {
 		String number = data.split(",")[0].replace("+CLIP:", "").replace('"', ' ').replace('"', ' ')
 				.trim();
 		if (number.length() == 0) {
-			number = "unknown";
+			number = null;
 		} else if (number.startsWith("+" + countryCode)) {
 			number = number.substring(countryCode.length() + 1);
 		}
@@ -428,7 +439,7 @@ class CommunicationHandler implements CommPortListener {
 	 * @param serviceCenterAddr
 	 * @throws Exception
 	 */
-	synchronized void initGsm(String pin, String serviceCenterAddr) throws Exception {
+	synchronized void initGsm(Integer pin, String serviceCenterAddr) throws Exception {
 		// Check connection
 		write("AT\r");
 		String resp = poll();
@@ -465,17 +476,13 @@ class CommunicationHandler implements CommPortListener {
 			if (pin == null) {
 				throw new Exception("PIN required: add it to configuration");
 			}
-			if (pin.length() != 4) {
-				throw new Exception("PIN format error: modify it in configuration");
-			}
-			try {
-				Integer.parseInt(pin);
-			} catch (NumberFormatException e) {
+			String pinString = "" + pin;
+			if (pinString.length() != 4) {
 				throw new Exception("PIN format error: modify it in configuration");
 			}
 
 			// Insert PIN
-			write("AT+CPIN=\"" + pin + "\"\r");
+			write("AT+CPIN=\"" + pinString + "\"\r");
 			resp = poll(10, TimeUnit.SECONDS);
 			if (resp == null || !resp.equals("OK")) {
 				logger.error("PIN error: modify it in configuration");
@@ -552,6 +559,15 @@ class CommunicationHandler implements CommPortListener {
 		resp = poll();
 		if (resp == null || !resp.equals("OK")) {
 			throw new Exception("CSMP 1: " + resp);
+		}
+
+		if (useSimPhase2) {
+			// Enable GSM phase 2+
+			write("AT+CSMS=1\r");
+			resp = poll();
+			if (resp == null || !resp.equals("OK")) {
+				throw new Exception("CSMS: " + resp);
+			}
 		}
 
 		// Include text in sms notifications
