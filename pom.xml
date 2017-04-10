@@ -4,14 +4,14 @@
 
 	<groupId>cc.sferalabs.sfera.drivers</groupId>
 	<artifactId>gsm</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 
 	<name>GSM</name>
 	<description>Driver for GSM modems</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<sfera-version>1.0.0</sfera-version>
+		<sfera-version>1.2.0</sfera-version>
 	</properties>
 	
 	<organization>

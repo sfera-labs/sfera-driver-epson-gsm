@@ -587,8 +587,14 @@ class CommunicationHandler implements CommPortListener {
 			// Enable GSM phase 2+
 			write("AT+CSMS=1\r");
 			resp = poll();
+			if (resp == null) {
+				throw new Exception("CSMS 1: " + resp);
+			}
+			if (resp.startsWith("+CSMS:")) {
+				resp = poll();
+			}
 			if (resp == null || !resp.equals("OK")) {
-				throw new Exception("CSMS: " + resp);
+				throw new Exception("CSMS 2: " + resp);
 			}
 		}
 
